@@ -1,0 +1,51 @@
+---
+title: "Installation"
+description: "Install and configure chapa-nodejs in your Node.js project."
+---
+
+# Installation
+
+This page walks you through adding `chapa-nodejs` to your project and creating a configured `Chapa` instance ready to make API calls.
+
+## Prerequisites
+
+You need Node.js installed and a Chapa account with a secret key. Retrieve your secret key from the Chapa dashboard before continuing.
+
+## Install the package
+
+Install with npm:
+
+```bash
+npm i -s chapa-nodejs
+```
+
+Or with Yarn:
+
+```bash
+yarn add chapa-nodejs
+```
+
+## Create a Chapa instance
+
+Import `Chapa` and pass your secret key to the constructor. All API calls flow through this instance.
+
+```typescript
+import { Chapa } from 'chapa-nodejs';
+
+const chapa = new Chapa({
+  secretKey: 'your-chapa-secret-key',
+});
+```
+
+> **Note:** Keep your secret key out of source control. Store it in an environment variable or secrets manager and pass the value at runtime.
+
+## Verify the setup
+
+The quickest way to confirm the SDK is wired up correctly is to call `getBanks()`, which requires no additional parameters and returns a list of supported banks:
+
+```typescript
+const response = await chapa.getBanks();
+console.log(response.data); // Array of bank objects
+```
+
+A successful response means your secret key is valid and the SDK can reach the Chapa API. Head to the [Quickstart](/docs/quickstart) to initialize your first transaction.

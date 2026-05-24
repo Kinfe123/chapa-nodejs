@@ -1,0 +1,89 @@
+---
+title: "Guides"
+description: "Practical runbooks for working with payments, subaccounts, and split revenue using chapa-nodejs."
+---
+
+# Guides
+
+This section covers the workflows you'll reach for after the initial setup. Each guide is focused on a single task and includes copy-paste code you can drop straight into your project.
+
+## Initialize and verify payments
+
+The [Quickstart](/docs/quickstart) already covers the core transaction loop — generate a reference, call `initialize`, redirect the user, then call `verify` on return. For the full set of fields available on `InitializeOptions` (including subaccount split configuration) and the shape of `VerifyResponse`, refer back to those examples.
+
+## Split payments with subaccounts
+
+Chapa supports splitting a payment across multiple recipients. The workflow has two steps: first create a subaccount using `createSubaccount`, then pass its ID in the `subaccounts` array when calling `initialize`.
+
+### Create a subaccount
+
+Fetch the correct `bank_code` from `getBanks()`, then register the subaccount:
+
+```typescript
+import { Chapa, SplitType } from 'chapa-nodejs';
+
+const chapa = new Chapa({ secretKey: 'your-chapa-secret-key' });
+
+// Get the bank code for your recipient's bank
+const banks = await chapa.getBanks();
+const bankCode = banks.data[0].id; // use the correct bank from the list
+
+const subaccount = await chapa.createSubaccount({
+  business_name: 'Test Business',
+  account_name: 'John Doe',
+  bank_code: bankCode,
+  account_number: '0123456789',
+  split_type: SplitType.PERCENTAGE,
+  split_value: 0.02, // 2%
+});
+
+console.log(subaccount.data); // subaccount ID string
+```
+
+### Attach the subaccount to a transaction
+
+Pass the returned subaccount ID in the `subaccounts` array when initializing the payment:
+
+```typescript
+const tx_ref = await chapa.generateTransactionReference();
+
+const response = await chapa.initialize({
+  first_name: 'Jane',
+  last_name: 'Smith',
+  email: 'jane@example.com',
+  currency: 'ETB',
+  amount: '500',
+  tx_ref: tx_ref,
+  callback_url: 'https://example.com/callback',
+  return_url: 'https://example.com/return',
+  subaccounts: [
+    {
+      id: subaccount.data,
+      split_type: SplitType.PERCENTAGE,
+      transaction_charge: 0.02,
+    },
+  ],
+});
+
+console.log(response.data.checkout_url);
+```
+
+`SplitType.PERCENTAGE` distributes a fraction of the transaction amount. Use `SplitType.FLAT` to distribute a fixed currency amount instead.
+
+## Get supported banks
+
+Call `getBanks()` whenever you need to present a bank picker to users or look up a `bank_code` for subaccount creation. The method takes no arguments:
+
+```typescript
+const { data } = await chapa.getBanks();
+
+data.forEach((bank) => {
+  console.log(bank.id, bank.name);
+});
+```
+
+Each bank object contains an `id` (the `bank_code` you pass to `createSubaccount`), a human-readable `name`, and a `country_id`.
+
+## Next steps
+
+If you run into errors during any of these workflows, the Troubleshooting guide maps common failure modes to concrete fixes.

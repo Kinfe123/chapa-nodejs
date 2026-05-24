@@ -1,0 +1,80 @@
+---
+title: "Quickstart"
+description: "Initialize and verify your first Chapa payment in minutes."
+---
+
+# Quickstart
+
+This guide takes you from a fresh install to a fully initialized payment with a verified result. You'll generate a transaction reference, start a checkout session, and confirm the payment — the core loop every Chapa integration follows.
+
+## 1. Install and configure
+
+If you haven't installed the SDK yet, see [Installation](/docs/installation). Once it's installed, create your `Chapa` instance:
+
+```typescript
+import { Chapa } from 'chapa-nodejs';
+
+const chapa = new Chapa({
+  secretKey: 'your-chapa-secret-key',
+});
+```
+
+## 2. Generate a transaction reference
+
+Every transaction needs a unique reference. Use the built-in utility so you don't have to roll your own:
+
+```typescript
+const tx_ref = await chapa.generateTransactionReference();
+// result: "TX-JHBUVLM7HYMSWDA"
+```
+
+You can customize the prefix and length if needed:
+
+```typescript
+const tx_ref = await chapa.generateTransactionReference({
+  prefix: 'TX',  // defaults to 'TX'
+  size: 20,      // defaults to 15
+});
+```
+
+## 3. Initialize a transaction
+
+Pass the reference along with the customer and payment details to `initialize`. The response contains a `checkout_url` that you redirect the user to:
+
+```typescript
+const response = await chapa.initialize({
+  first_name: 'John',
+  last_name: 'Doe',
+  email: 'john@gmail.com',
+  currency: 'ETB',
+  amount: '200',
+  tx_ref: tx_ref,
+  callback_url: 'https://example.com/',
+  return_url: 'https://example.com/',
+  customization: {
+    title: 'Test Title',
+    description: 'Test Description',
+  },
+});
+
+// Redirect the user:
+console.log(response.data.checkout_url);
+```
+
+## 4. Verify the payment
+
+After the user completes checkout and returns to your `return_url`, verify the transaction using the same `tx_ref`:
+
+```typescript
+const verification = await chapa.verify({
+  tx_ref: tx_ref,
+});
+
+console.log(verification.data.status); // e.g. "success"
+```
+
+The `VerifyResponse` gives you the full transaction record including amount, currency, method, and timestamps.
+
+## Next steps
+
+Now that you have the core loop working, explore [split payments](/docs/guides) to distribute revenue across subaccounts, or check the Troubleshooting guide if something isn't behaving as expected.
