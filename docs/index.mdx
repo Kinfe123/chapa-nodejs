@@ -1,0 +1,12 @@
+---
+title: "NodeJS SDK for Chapa"
+description: "Accept payments in Ethiopia with the official Chapa Node.js SDK — initialize transactions, verify payments, split revenue, and manage subaccounts."
+---
+
+# NodeJS SDK for Chapa
+
+`chapa-nodejs` is a fully-typed Node.js SDK for the [Chapa](https://chapa.co) payment gateway. It gives you a clean, promise-based interface for initializing transactions, verifying payments, managing subaccounts, and splitting revenue — all with first-class TypeScript support so your editor catches mistakes before your users do.
+
+The core primitive is a `Chapa` instance. You create one with your secret key and then call methods on it — `initialize`, `verify`, `getBanks`, `createSubaccount`, and `generateTransactionReference`. Every method returns a typed response, so you always know the shape of what you're working with.
+
+If you're new, jump to [Installation](/docs/installation) to add the package to your project, then follow the [Quickstart](/docs/quickstart) to run your first transaction. The [Guides](/docs/guides) cover split payments, subaccount management, and common troubleshooting steps.

@@ -1,0 +1,77 @@
+---
+title: "Quickstart"
+description: "Initialize and verify your first Chapa payment in minutes."
+---
+
+# Quickstart
+
+This guide takes you from a fresh install to a completed payment flow — generating a transaction reference, initializing a charge, and verifying the result. You'll need a configured `Chapa` instance; see [Installation](/docs/installation) if you haven't done that yet.
+
+## Step 1 — Generate a transaction reference
+
+Every Chapa transaction requires a unique `tx_ref`. Use the built-in utility so you never have to think about uniqueness yourself.
+
+```typescript
+import { Chapa } from 'chapa-nodejs';
+
+const chapa = new Chapa({
+  secretKey: 'your-chapa-secret-key',
+});
+
+const tx_ref = await chapa.generateTransactionReference();
+// result: 'TX-JHBUVLM7HYMSWDA'
+```
+
+You can customize the prefix and length if your system needs a specific format:
+
+```typescript
+const tx_ref = await chapa.generateTransactionReference({
+  prefix: 'ORDER',
+  size: 20,
+});
+```
+
+## Step 2 — Initialize a transaction
+
+Pass the reference along with the customer and payment details to `initialize`. On success, Chapa returns a `checkout_url` you redirect the customer to.
+
+```typescript
+const response = await chapa.initialize({
+  first_name: 'John',
+  last_name: 'Doe',
+  email: 'john@gmail.com',
+  currency: 'ETB',
+  amount: '200',
+  tx_ref: tx_ref,
+  callback_url: 'https://example.com/callback',
+  return_url: 'https://example.com/return',
+  customization: {
+    title: 'Order Payment',
+    description: 'Payment for order #1234',
+  },
+});
+
+console.log(response.data.checkout_url);
+// redirect the customer to this URL
+```
+
+## Step 3 — Verify the payment
+
+After the customer completes payment and returns to your `callback_url`, verify the transaction using the same `tx_ref`.
+
+```typescript
+const verification = await chapa.verify({
+  tx_ref: tx_ref,
+});
+
+if (verification.data.status === 'success') {
+  // mark the order as paid
+  console.log('Payment confirmed:', verification.data.reference);
+}
+```
+
+The `verify` response includes the full transaction record — amount, currency, method, customer details, and timestamps — so you have everything you need to fulfill the order.
+
+## Next steps
+
+For revenue sharing across multiple parties, see [Guides](/docs/guides) to learn how to use split payments and subaccounts. If something isn't working, the Troubleshooting page covers the most common issues.
