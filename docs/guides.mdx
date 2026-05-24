@@ -1,0 +1,67 @@
+---
+title: "Guides"
+description: "Practical runbooks for common workflows with chapa-nodejs."
+---
+
+# Guides
+
+These guides cover the practical tasks you'll reach for after the initial setup. Each one is focused on a single goal and includes copy-pasteable code you can drop straight into your project.
+
+## Examples
+
+Use these examples as concrete starting points for this workflow:
+
+### Initialize Transaction
+```typescript
+// Generate transaction reference using our utility method or provide your own
+const tx_ref = await chapa.generateTransactionReference();
+
+const response = await chapa.initialize({
+  first_name: 'John',
+  last_name: 'Doe',
+  email: 'john@gmail.com',
+  currency: 'ETB',
+  amount: '200',
+  tx_ref: tx_ref,
+  callback_url: 'https://example.com/',
+  return_url: 'https://example.com/',
+  customization: {
+    title: 'Test Title',
+    description: 'Test Description',
+  },
+});
+```
+
+### Split Payment
+```typescript
+// Generate transaction reference using our utility method or provide your own
+const tx_ref = await chapa.generateTransactionReference();
+
+const response = chapa.initialize({
+  first_name: 'John',
+  last_name: 'Doe',
+  email: 'john@gmail.com',
+  currency: 'ETB',
+  amount: '200',
+  tx_ref: tx_ref,
+  callback_url: 'https://example.com/',
+  return_url: 'https://example.com/',
+  customization: {
+    title: 'Test Title',
+    description: 'Test Description',
+  },
+  // Add this for split payment
+  subaccounts: [
+    {
+      id: '80a510ea-7497-4499-8b49-ac13a3ab7d07',
+    },
+  ],
+});
+```
+
+### Verify Payment
+```typescript
+const response = await chapa.verify({
+  tx_ref: 'TX-JHBUVLM7HYMSWDA',
+});
+```

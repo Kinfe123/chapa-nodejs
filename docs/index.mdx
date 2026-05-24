@@ -1,0 +1,12 @@
+---
+title: "chapa-nodejs"
+description: "The official Node.js SDK for Chapa — initialize payments, verify transactions, split revenue, and manage subaccounts with full TypeScript support."
+---
+
+# chapa-nodejs
+
+`chapa-nodejs` is a TypeScript-first SDK for the [Chapa](https://chapa.co) payment platform. It gives your Node.js application a single, well-typed interface for initializing checkout sessions, verifying completed payments, splitting revenue across subaccounts, and querying supported banks — without manually crafting HTTP requests or parsing raw responses.
+
+The SDK is built around a single `Chapa` class. You instantiate it once with your secret key, and every operation — `initialize`, `verify`, `getBanks`, `createSubaccount`, and `generateTransactionReference` — is available as an async method on that instance. Every method's input and output is fully typed, so your editor catches mistakes before they reach production.
+
+If you're setting up for the first time, head to [Installation](/docs/installation) to add the package and configure your secret key. Then follow the [Quickstart](/docs/quickstart) to run your first transaction in a few lines of code. The [Guides](/docs/guides) cover practical workflows like troubleshooting common errors.

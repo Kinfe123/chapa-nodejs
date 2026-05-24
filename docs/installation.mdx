@@ -1,0 +1,45 @@
+---
+title: "Installation"
+description: "Install and configure chapa-nodejs in your Node.js project."
+---
+
+# Installation
+
+This page walks you through adding `chapa-nodejs` to your project and wiring up your Chapa secret key so you're ready to make API calls.
+
+## Prerequisites
+
+- Node.js 14 or later
+- A Chapa account with a secret key — find yours in the Chapa dashboard under **Settings → API Keys**
+
+## Install the package
+
+Choose your package manager:
+
+```bash
+npm install chapa-nodejs
+```
+
+```bash
+yarn add chapa-nodejs
+```
+
+## Configure the client
+
+Import `Chapa` and create an instance with your secret key. You typically do this once and export the instance for reuse across your application.
+
+```typescript
+import { Chapa } from 'chapa-nodejs';
+
+const chapa = new Chapa({
+  secretKey: 'your-chapa-secret-key',
+});
+
+export default chapa;
+```
+
+> **Note:** Never hard-code your secret key. Load it from your runtime environment or a secrets manager, then pass the resolved value into `secretKey`.
+
+## Verify the setup
+
+If you can import `Chapa` without a module-resolution error and construct an instance, the installation is complete. You're ready to initialize your first transaction — head to the [Quickstart](/docs/quickstart) for a working end-to-end example.

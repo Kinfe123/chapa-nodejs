@@ -1,0 +1,79 @@
+---
+title: "Quickstart"
+description: "Run your first Chapa payment flow in minutes."
+---
+
+# Quickstart
+
+This guide takes you from a fresh install to a working payment initialization and verification. By the end you'll have a transaction reference, a checkout URL to redirect your customer to, and a verified payment response — all in TypeScript.
+
+## 1. Install and configure
+
+If you haven't installed the SDK yet, see [Installation](/docs/installation). Once installed, create your `Chapa` instance:
+
+```typescript
+import { Chapa } from 'chapa-nodejs';
+
+const chapa = new Chapa({
+  secretKey: "your-chapa-secret-key",
+});
+```
+
+## 2. Generate a transaction reference
+
+Use the built-in utility to create a unique, random alphanumeric reference for each payment. This avoids collisions without any external library.
+
+```typescript
+const tx_ref = await chapa.generateTransactionReference();
+// e.g. "TX-JHBUVLM7HYMSWDA"
+```
+
+You can customize the prefix and length if your system has naming conventions:
+
+```typescript
+const tx_ref = await chapa.generateTransactionReference({
+  prefix: 'ORDER',
+  size: 20,
+});
+```
+
+## 3. Initialize a transaction
+
+Call `initialize` with the customer's details and your transaction reference. On success, the response contains a `checkout_url` to redirect your customer to.
+
+```typescript
+const response = await chapa.initialize({
+  first_name: 'John',
+  last_name: 'Doe',
+  email: 'john@gmail.com',
+  currency: 'ETB',
+  amount: '200',
+  tx_ref: tx_ref,
+  callback_url: 'https://example.com/payment/callback',
+  return_url: 'https://example.com/payment/success',
+  customization: {
+    title: 'Order #1234',
+    description: 'Payment for your order',
+  },
+});
+
+// Redirect your customer to:
+console.log(response.data.checkout_url);
+```
+
+## 4. Verify the payment
+
+After Chapa calls your `callback_url`, verify the transaction server-side using the same `tx_ref`:
+
+```typescript
+const verification = await chapa.verify({
+  tx_ref: tx_ref,
+});
+
+if (verification.data.status === 'success') {
+  // Mark the order as paid in your database
+  console.log('Payment confirmed for', verification.data.email);
+}
+```
+
+From here you can explore split payments by attaching subaccounts to `initialize`, or query supported banks with `getBanks` when setting up subaccounts. See the [Guides](/docs/guides) for those workflows.
