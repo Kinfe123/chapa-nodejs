@@ -1,0 +1,76 @@
+---
+title: "Quickstart"
+description: "Initialize and verify your first Chapa payment in minutes."
+---
+
+# Quickstart
+
+This guide takes you from a fresh install to a working payment flow: generate a transaction reference, initialize a checkout, and verify the result when your customer returns. The whole flow is fewer than 20 lines of TypeScript.
+
+## 1. Install and configure
+
+If you haven't already, install the package and create a client (see [Installation](/docs/installation) for details).
+
+```typescript
+import { Chapa } from 'chapa-nodejs';
+
+const chapa = new Chapa({
+  secretKey: "your-chapa-secret-key",
+});
+```
+
+## 2. Generate a transaction reference
+
+Use the built-in utility to produce a unique, random alphanumeric reference. You can also supply your own string — just make sure it's unique per transaction.
+
+```typescript
+const tx_ref = await chapa.generateTransactionReference();
+// e.g. "TX-JHBUVLM7HYMSWDA"
+```
+
+To customize the prefix or length:
+
+```typescript
+const tx_ref = await chapa.generateTransactionReference({
+  prefix: 'ORDER', // defaults to "TX"
+  size: 20,        // defaults to 15
+});
+```
+
+## 3. Initialize the transaction
+
+Call `initialize` with the customer details and the reference you just generated. On success, Chapa returns a `checkout_url` you redirect the customer to.
+
+```typescript
+const response = await chapa.initialize({
+  first_name: 'John',
+  last_name: 'Doe',
+  email: 'john@example.com',
+  currency: 'ETB',
+  amount: '200',
+  tx_ref: tx_ref,
+  callback_url: 'https://your-app.com/payment/callback',
+  return_url: 'https://your-app.com/payment/return',
+  customization: {
+    title: 'Order #1234',
+    description: 'Premium subscription',
+  },
+});
+
+// Redirect the customer:
+// response.data.checkout_url
+```
+
+## 4. Verify the payment
+
+After the customer completes (or abandons) checkout, verify the transaction server-side using the same `tx_ref`.
+
+```typescript
+const verification = await chapa.verify({ tx_ref });
+
+if (verification.data.status === 'success') {
+  console.log('Payment confirmed!', verification.data.amount);
+}
+```
+
+> **Note:** Always verify payments on your server. Never trust client-side callbacks alone to mark an order as paid.

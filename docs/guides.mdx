@@ -1,0 +1,75 @@
+---
+title: "Guides"
+description: "Practical runbooks for common workflows with chapa-nodejs."
+---
+
+# Guides
+
+These guides cover the practical tasks you'll reach for after the initial setup: splitting payments across multiple recipients, querying supported banks, and creating the subaccounts those splits depend on. Head to Troubleshooting if something isn't working as expected.
+
+## Initialize and verify a payment
+
+The core flow — generate a reference, call `initialize`, redirect, then `verify` — is covered step by step in [Quickstart](/docs/quickstart). Come back here when you need to go further.
+
+## Split payments
+
+Chapa lets you route a portion of a transaction to one or more subaccounts at initialization time. Pass a `subaccounts` array inside `InitializeOptions`, where each entry specifies the subaccount `id` and how the split is calculated.
+
+```typescript
+import { Chapa, SplitType } from 'chapa-nodejs';
+
+const chapa = new Chapa({ secretKey: "your-chapa-secret-key" });
+
+const tx_ref = await chapa.generateTransactionReference();
+
+const response = await chapa.initialize({
+  first_name: 'Jane',
+  last_name: 'Smith',
+  email: 'jane@example.com',
+  currency: 'ETB',
+  amount: '500',
+  tx_ref,
+  subaccounts: [
+    {
+      id: 'your-subaccount-id',
+      split_type: SplitType.PERCENTAGE,
+      transaction_charge: 0.1, // 10%
+    },
+  ],
+});
+```
+
+`SplitType.PERCENTAGE` distributes a fraction of the total; `SplitType.FLAT` deducts a fixed amount. You need a registered subaccount `id` before you can use splits — see the section below.
+
+## Create a subaccount
+
+Before you can split a payment, you register the recipient as a subaccount. Use the `bank_code` returned by `getBanks()` to identify the destination bank.
+
+```typescript
+// 1. Look up bank codes
+const { data: banks } = await chapa.getBanks();
+const bank = banks.find(b => b.name === 'Commercial Bank of Ethiopia');
+
+// 2. Register the subaccount
+const sub = await chapa.createSubaccount({
+  business_name: 'Acme Supplies',
+  account_name: 'John Doe',
+  bank_code: bank!.id,
+  account_number: '1000012345',
+  split_type: SplitType.PERCENTAGE,
+  split_value: 0.05, // 5% of each transaction
+});
+
+console.log(sub.data); // subaccount ID — store this for use in initialize()
+```
+
+## Get supported banks
+
+`getBanks()` returns every bank Chapa currently works with, across all supported currencies. The response includes the bank `id` (which you pass as `bank_code` when creating a subaccount), `name`, and `country_id`.
+
+```typescript
+const response = await chapa.getBanks();
+// response.data — array of { id, name, country_id, created_at, updated_at }
+```
+
+This call requires no options and is a good first check that your secret key is valid.
