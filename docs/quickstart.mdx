@@ -1,0 +1,75 @@
+---
+title: "Quickstart"
+description: "Run chapa-nodejs for the first time."
+order: 20
+---
+
+# Quickstart
+
+This guide takes you from a fresh `chapa-nodejs` install to a complete payment flow — generate a transaction reference, open a checkout session, and verify the result once the user returns. You should have the SDK installed and a `Chapa` instance configured before you begin (see [Installation](/docs/installation)).
+
+## 1. Generate a transaction reference
+
+Every Chapa transaction needs a unique `tx_ref`. The SDK ships a utility method so you don't have to roll your own:
+
+```typescript
+const tx_ref = await chapa.generateTransactionReference();
+// e.g. "TX-JHBUVLM7HYMSWDA"
+```
+
+You can customise the prefix and length:
+
+```typescript
+const tx_ref = await chapa.generateTransactionReference({
+  prefix: 'ORDER', // defaults to "TX"
+  size: 20,        // defaults to 15
+});
+// e.g. "ORDER-JHBUVLM7HYMSWDAXYZ12"
+```
+
+## 2. Initialize a transaction
+
+Pass the reference and your customer's details to `initialize`. On success, Chapa returns a `checkout_url` — redirect your user there to complete payment.
+
+```typescript
+import { Chapa } from 'chapa-nodejs';
+
+const chapa = new Chapa({ secretKey: "your-chapa-secret-key" });
+
+const tx_ref = await chapa.generateTransactionReference();
+
+const response = await chapa.initialize({
+  first_name: 'John',
+  last_name: 'Doe',
+  email: 'john@example.com',
+  currency: 'ETB',
+  amount: '200',
+  tx_ref: tx_ref,
+  callback_url: 'https://example.com/webhook',
+  return_url: 'https://example.com/thank-you',
+  customization: {
+    title: 'Order #1234',
+    description: 'Payment for your recent order',
+  },
+});
+
+console.log(response.data.checkout_url); // redirect the user here
+```
+
+## 3. Verify the payment
+
+After the user completes payment and Chapa calls your `callback_url` (or the user returns via `return_url`), verify the transaction using the same `tx_ref`:
+
+```typescript
+const verification = await chapa.verify({ tx_ref });
+
+if (verification.data.status === 'success') {
+  console.log('Payment confirmed!', verification.data.amount);
+}
+```
+
+> **Note:** Always verify server-side using your secret key. Never trust the redirect query parameters alone to confirm a payment.
+
+## Next steps
+
+You now have a working end-to-end payment flow. To split revenue across multiple recipients, see the [Split Payments guide](/docs/guides). For common errors and recovery steps, visit [Troubleshooting](/docs/guides/troubleshooting).

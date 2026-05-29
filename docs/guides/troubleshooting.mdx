@@ -1,0 +1,86 @@
+---
+title: "Troubleshooting"
+description: "Common setup and runtime issues with chapa-nodejs, and how to fix them."
+order: 1
+---
+
+# Troubleshooting
+
+This page covers the errors developers most commonly hit when integrating `chapa-nodejs`, along with concrete steps to resolve each one.
+
+## Invalid or missing secret key
+
+If every API call returns a `401 Unauthorized` or an authentication error, the most likely cause is a missing or malformed `secretKey`.
+
+1. Confirm the key is set in your environment: `echo $your secret key`
+2. Make sure you're passing it correctly when constructing `Chapa`:
+
+```typescript
+const chapa = new Chapa({
+  secretKey: "your-chapa-secret-key",
+});
+```
+
+3. Check that your key starts with the correct prefix for the environment (test keys and live keys are different — use a test key during development).
+
+## Validation errors on `initialize`
+
+`chapa-nodejs` validates your options before sending the request. If you see a validation error, check that all required fields are present:
+
+- `first_name`, `last_name`, `email` — all strings, all required
+- `currency` — must be a valid currency code (e.g. `'ETB'`)
+- `amount` — passed as a string, not a number
+- `tx_ref` — must be unique per transaction; use `generateTransactionReference()` or supply your own
+
+```typescript
+// amount must be a string
+const response = await chapa.initialize({
+  amount: '200',  // ✓ correct
+  // amount: 200, // ✗ will fail validation
+  ...
+});
+```
+
+## Verification returns an unexpected status
+
+If `chapa.verify()` returns a status other than `'success'`, the transaction has not settled. Common causes:
+
+- The user abandoned the checkout page before paying.
+- You called `verify` immediately after `initialize` before the user had a chance to pay. Always trigger verification from your `callback_url` webhook or after the user lands on `return_url`.
+- The `tx_ref` does not match what was sent to `initialize`. Double-check that you're passing the same reference through the entire flow.
+
+```typescript
+const result = await chapa.verify({ tx_ref: 'TX-JHBUVLM7HYMSWDA' });
+console.log(result.data.status); // 'success' | 'pending' | 'failed'
+```
+
+## `bank_code` is not accepted when creating a subaccount
+
+Bank codes are UUIDs returned by `getBanks()`, not human-readable names. Fetch the list at runtime rather than hardcoding a value:
+
+```typescript
+const banksResponse = await chapa.getBanks();
+const bank = banksResponse.data.find(b => b.name === 'Commercial Bank of Ethiopia');
+
+const subaccount = await chapa.createSubaccount({
+  bank_code: bank!.id, // use the id field, not the name
+  ...
+});
+```
+
+> **Note:** Bank IDs can change between Chapa environments. Always resolve bank codes dynamically in production rather than storing them as constants.
+
+## TypeScript type errors
+
+All types are exported from `chapa-nodejs` and can be imported directly:
+
+```typescript
+import {
+  InitializeOptions,
+  VerifyOptions,
+  CreateSubaccountOptions,
+  SplitType,
+} from 'chapa-nodejs';
+```
+
+If TypeScript cannot resolve the imports, make sure your `tsconfig.json` includes `moduleResolution: 'node'` or `'bundler'` and that `chapa-nodejs` is listed in your `dependencies` (not just `devDependencies`).

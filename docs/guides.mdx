@@ -1,0 +1,77 @@
+---
+title: "Guides"
+description: "Practical runbooks for common workflows: split payments, subaccounts, bank lookups, and more."
+order: 0
+---
+
+# Guides
+
+This section collects task-oriented walkthroughs for the most common Chapa integration patterns beyond a basic checkout. Each guide is self-contained — pick the one that matches what you're building.
+
+**[Split Payments & Subaccounts](/docs/guides/troubleshooting)** — If your platform routes money to multiple recipients, you'll need to register subaccounts and attach them to a transaction. The guide covers fetching bank codes, creating a subaccount, and wiring it into `initialize`.
+
+For setup problems or unexpected API errors, see [Troubleshooting](/docs/guides/troubleshooting).
+
+## Examples
+
+Use these examples as concrete starting points for this workflow:
+
+### Split Payment
+```typescript
+// Generate transaction reference using our utility method or provide your own
+const tx_ref = await chapa.generateTransactionReference();
+
+const response = chapa.initialize({
+  first_name: 'John',
+  last_name: 'Doe',
+  email: 'john@gmail.com',
+  currency: 'ETB',
+  amount: '200',
+  tx_ref: tx_ref,
+  callback_url: 'https://example.com/',
+  return_url: 'https://example.com/',
+  customization: {
+    title: 'Test Title',
+    description: 'Test Description',
+  },
+  // Add this for split payment
+  subaccounts: [
+    {
+      id: '80a510ea-7497-4499-8b49-ac13a3ab7d07',
+    },
+  ],
+});
+```
+
+### Initialize Transaction
+```typescript
+// Generate transaction reference using our utility method or provide your own
+const tx_ref = await chapa.generateTransactionReference();
+
+const response = await chapa.initialize({
+  first_name: 'John',
+  last_name: 'Doe',
+  email: 'john@gmail.com',
+  currency: 'ETB',
+  amount: '200',
+  tx_ref: tx_ref,
+  callback_url: 'https://example.com/',
+  return_url: 'https://example.com/',
+  customization: {
+    title: 'Test Title',
+    description: 'Test Description',
+  },
+});
+```
+
+### Create Subaccount
+```typescript
+const response = await chapa.createSubaccount({
+  business_name: 'Test Business',
+  account_name: 'John Doe',
+  bank_code: '80a510ea-7497-4499-8b49-ac13a3ab7d07', // Get this from the `getBanks()` method
+  account_number: '0123456789',
+  split_type: SplitType.PERCENTAGE,
+  split_value: 0.02,
+});
+```
